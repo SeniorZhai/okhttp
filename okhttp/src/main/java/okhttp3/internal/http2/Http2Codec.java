@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import okhttp3.Headers;
+import okhttp3.SessionProvider;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
@@ -121,6 +122,18 @@ public final class Http2Codec implements HttpCodec {
       stream.closeLater(ErrorCode.CANCEL);
       throw new IOException("Canceled");
     }
+    stream.readTimeout().timeout(chain.readTimeoutMillis(), TimeUnit.MILLISECONDS);
+    stream.writeTimeout().timeout(chain.writeTimeoutMillis(), TimeUnit.MILLISECONDS);
+  }
+
+  @Override public void writeRequestHeaders(Request request, SessionProvider provider) throws IOException {
+    if (stream != null) return;
+
+    boolean hasRequestBody = request.body() != null;
+    ArrayList<Header> requestHeaders = new ArrayList<Header>();
+    requestHeaders.addAll(http2HeadersList(request));
+    requestHeaders.add(provider.getSessionHeader(request));
+    stream = connection.newStream(requestHeaders, hasRequestBody);
     stream.readTimeout().timeout(chain.readTimeoutMillis(), TimeUnit.MILLISECONDS);
     stream.writeTimeout().timeout(chain.writeTimeoutMillis(), TimeUnit.MILLISECONDS);
   }
