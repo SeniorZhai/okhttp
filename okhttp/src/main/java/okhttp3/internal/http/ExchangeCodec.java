@@ -21,6 +21,7 @@ import okhttp3.Headers;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.internal.connection.RealConnection;
+import okhttp3.SessionProvider;
 import okio.Sink;
 import okio.Source;
 
@@ -41,6 +42,8 @@ public interface ExchangeCodec {
 
   /** This should update the HTTP engine's sentRequestMillis field. */
   void writeRequestHeaders(Request request) throws IOException;
+
+  void writeRequestHeaders(Request request, SessionProvider provider) throws IOException;
 
   /** Flush the request to the underlying socket. */
   void flushRequest() throws IOException;
