@@ -11,7 +11,7 @@ Download [the latest JAR][3] or grab via Maven:
 <dependency>
   <groupId>com.squareup.okhttp3</groupId>
   <artifactId>okhttp</artifactId>
-  <version>3.11.0</version>
+  <version>3.11.2</version>
 </dependency>
 ```
 or Gradle:
@@ -36,7 +36,7 @@ Download [the latest JAR][4] or grab via Maven:
 <dependency>
   <groupId>com.squareup.okhttp3</groupId>
   <artifactId>mockwebserver</artifactId>
-  <version>3.11.0</version>
+  <version>3.11.2</version>
   <scope>test</scope>
 </dependency>
 ```

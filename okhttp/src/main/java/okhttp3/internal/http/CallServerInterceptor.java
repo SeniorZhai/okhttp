@@ -20,6 +20,7 @@ import java.net.ProtocolException;
 import okhttp3.Interceptor;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.SessionProvider;
 import okhttp3.internal.Util;
 import okhttp3.internal.connection.RealConnection;
 import okhttp3.internal.connection.StreamAllocation;
@@ -32,9 +33,15 @@ import okio.Sink;
 /** This is the last interceptor in the chain. It makes a network call to the server. */
 public final class CallServerInterceptor implements Interceptor {
   private final boolean forWebSocket;
-
+  private final SessionProvider sessionProvider;
   public CallServerInterceptor(boolean forWebSocket) {
     this.forWebSocket = forWebSocket;
+    sessionProvider = null;
+  }
+
+  public CallServerInterceptor(boolean forWebSocket,SessionProvider sessionProvider) {
+    this.forWebSocket = forWebSocket;
+    this.sessionProvider = sessionProvider;
   }
 
   @Override public Response intercept(Chain chain) throws IOException {
@@ -47,7 +54,11 @@ public final class CallServerInterceptor implements Interceptor {
     long sentRequestMillis = System.currentTimeMillis();
 
     realChain.eventListener().requestHeadersStart(realChain.call());
-    httpCodec.writeRequestHeaders(request);
+    if (sessionProvider != null) {
+      httpCodec.writeRequestHeaders(request,sessionProvider);
+    } else {
+      httpCodec.writeRequestHeaders(request);
+    }
     realChain.eventListener().requestHeadersEnd(realChain.call(), request);
 
     Response.Builder responseBuilder = null;
@@ -71,8 +82,7 @@ public final class CallServerInterceptor implements Interceptor {
 
         request.body().writeTo(bufferedRequestBody);
         bufferedRequestBody.close();
-        realChain.eventListener()
-            .requestBodyEnd(realChain.call(), requestBodyOut.successfulCount);
+        realChain.eventListener().requestBodyEnd(realChain.call(), requestBodyOut.successfulCount);
       } else if (!connection.isMultiplexed()) {
         // If the "Expect: 100-continue" expectation wasn't met, prevent the HTTP/1 connection
         // from being reused. Otherwise we're still obligated to transmit the request body to
