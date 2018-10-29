@@ -19,6 +19,7 @@ import java.io.IOException;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
+import okhttp3.SessionProvider;
 import okio.Sink;
 
 /** Encodes HTTP requests and decodes HTTP responses. */
@@ -35,6 +36,8 @@ public interface HttpCodec {
 
   /** This should update the HTTP engine's sentRequestMillis field. */
   void writeRequestHeaders(Request request) throws IOException;
+
+  void writeRequestHeaders(Request request, SessionProvider provider) throws IOException;
 
   /** Flush the request to the underlying socket. */
   void flushRequest() throws IOException;

@@ -34,6 +34,7 @@ public final class Request {
   final Headers headers;
   final @Nullable RequestBody body;
   final Map<Class<?>, Object> tags;
+  final @Nullable SessionProvider sessionProvider;
 
   private volatile CacheControl cacheControl; // Lazily initialized.
 
@@ -43,6 +44,7 @@ public final class Request {
     this.headers = builder.headers.build();
     this.body = builder.body;
     this.tags = Util.immutableMap(builder.tags);
+    this.sessionProvider = builder.sessionProvider;
   }
 
   public HttpUrl url() {
@@ -69,6 +71,9 @@ public final class Request {
     return body;
   }
 
+  public @Nullable SessionProvider sessionProvider() {
+    return sessionProvider;
+  }
   /**
    * Returns the tag attached with {@code Object.class} as a key, or null if no tag is attached with
    * that key.
@@ -121,6 +126,7 @@ public final class Request {
     String method;
     Headers.Builder headers;
     RequestBody body;
+    @Nullable SessionProvider sessionProvider;
 
     /** A mutable map of tags, or an immutable empty map if we don't have any. */
     Map<Class<?>, Object> tags = Collections.emptyMap();
@@ -259,6 +265,11 @@ public final class Request {
       }
       this.method = method;
       this.body = body;
+      return this;
+    }
+
+    public Builder sessionProvider(SessionProvider provider) {
+      this.sessionProvider = provider;
       return this;
     }
 
