@@ -66,10 +66,15 @@ public final class Exchange {
     return duplex;
   }
 
-  public void writeRequestHeaders(Request request) throws IOException {
+  public void writeRequestHeaders(Request request, SessionProvider sessionProvider)
+      throws IOException {
     try {
       eventListener.requestHeadersStart(call);
-      codec.writeRequestHeaders(request);
+      if (sessionProvider != null) {
+        codec.writeRequestHeaders(request);
+      } else {
+        codec.writeRequestHeaders(request, sessionProvider);
+      }
       eventListener.requestHeadersEnd(call, request);
     } catch (IOException e) {
       eventListener.requestFailed(call, e);
@@ -182,8 +187,8 @@ public final class Exchange {
     codec.connection().trackFailure(e);
   }
 
-  @Nullable IOException bodyComplete(
-      long bytesRead, boolean responseDone, boolean requestDone, @Nullable IOException e) {
+  @Nullable IOException bodyComplete(long bytesRead, boolean responseDone, boolean requestDone,
+      @Nullable IOException e) {
     if (e != null) {
       trackFailure(e);
     }
@@ -224,8 +229,8 @@ public final class Exchange {
     @Override public void write(Buffer source, long byteCount) throws IOException {
       if (closed) throw new IllegalStateException("closed");
       if (contentLength != -1L && bytesReceived + byteCount > contentLength) {
-        throw new ProtocolException("expected " + contentLength
-            + " bytes but received " + (bytesReceived + byteCount));
+        throw new ProtocolException(
+            "expected " + contentLength + " bytes but received " + (bytesReceived + byteCount));
       }
       try {
         super.write(source, byteCount);
@@ -291,8 +296,8 @@ public final class Exchange {
 
         long newBytesReceived = bytesReceived + read;
         if (contentLength != -1L && newBytesReceived > contentLength) {
-          throw new ProtocolException("expected " + contentLength
-              + " bytes but received " + newBytesReceived);
+          throw new ProtocolException(
+              "expected " + contentLength + " bytes but received " + newBytesReceived);
         }
 
         bytesReceived = newBytesReceived;

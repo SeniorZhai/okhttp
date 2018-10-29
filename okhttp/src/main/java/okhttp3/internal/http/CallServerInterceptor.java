@@ -20,6 +20,8 @@ import java.net.ProtocolException;
 import okhttp3.Interceptor;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.internal.Internal;
+import okhttp3.SessionProvider;
 import okhttp3.internal.Util;
 import okhttp3.internal.connection.Exchange;
 import okio.BufferedSink;
@@ -28,9 +30,15 @@ import okio.Okio;
 /** This is the last interceptor in the chain. It makes a network call to the server. */
 public final class CallServerInterceptor implements Interceptor {
   private final boolean forWebSocket;
-
+  private final SessionProvider sessionProvider;
   public CallServerInterceptor(boolean forWebSocket) {
     this.forWebSocket = forWebSocket;
+    sessionProvider = null;
+  }
+
+  public CallServerInterceptor(boolean forWebSocket, SessionProvider sessionProvider) {
+    this.forWebSocket = forWebSocket;
+    this.sessionProvider = sessionProvider;
   }
 
   @Override public Response intercept(Chain chain) throws IOException {
@@ -39,9 +47,7 @@ public final class CallServerInterceptor implements Interceptor {
     Request request = realChain.request();
 
     long sentRequestMillis = System.currentTimeMillis();
-
-    exchange.writeRequestHeaders(request);
-
+    exchange.writeRequestHeaders(request, sessionProvider);
     boolean responseHeadersStarted = false;
     Response.Builder responseBuilder = null;
     if (HttpMethod.permitsRequestBody(request.method()) && request.body() != null) {

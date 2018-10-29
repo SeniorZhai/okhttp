@@ -24,6 +24,7 @@ import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.SessionProvider;
 import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
 import okhttp3.internal.connection.RealConnection;
@@ -152,7 +153,17 @@ public final class Http1ExchangeCodec implements ExchangeCodec {
 
     return HttpHeaders.contentLength(response);
   }
+  @Override public void writeRequestHeaders(Request request, SessionProvider provider) throws IOException {
+    String requestLine = RequestLine.get(
+        request, streamAllocation.connection().route().proxy().type());
+    writeRequestWithSession(request.headers(), requestLine, provider.getSession(request));
+  }
 
+  @Override public ResponseBody openResponseBody(Response response) throws IOException {
+    streamAllocation.eventListener.responseBodyStart(streamAllocation.call);
+    String contentType = response.header("Content-Type");
+  }
+  
   @Override public Source openResponseBodySource(Response response) {
     if (!HttpHeaders.hasBody(response)) {
       return newFixedLengthSource(0);
@@ -199,6 +210,22 @@ public final class Http1ExchangeCodec implements ExchangeCodec {
           .writeUtf8(": ")
           .writeUtf8(headers.value(i))
           .writeUtf8("\r\n");
+    }
+    sink.writeUtf8("\r\n");
+    state = STATE_OPEN_REQUEST_BODY;
+  }
+
+  public void writeRequestWithSession(Headers headers, String requestLine, String session) throws IOException {
+    if (state != STATE_IDLE) throw new IllegalStateException("state: " + state);
+    sink.writeUtf8(requestLine).writeUtf8("\r\n");
+    for (int i = 0, size = headers.size(); i < size; i++) {
+      sink.writeUtf8(headers.name(i))
+          .writeUtf8(": ")
+          .writeUtf8(headers.value(i))
+          .writeUtf8("\r\n");
+    }
+    if (session != null) {
+      sink.writeUtf8(session).writeUtf8("\r\n");
     }
     sink.writeUtf8("\r\n");
     state = STATE_OPEN_REQUEST_BODY;
