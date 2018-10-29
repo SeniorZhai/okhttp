@@ -9,7 +9,7 @@ Download
 Download [the latest JAR][3] or grab via Maven:
 ```xml
 <dependency>
-  <groupId>com.squareup.okhttp3</groupId>
+  <groupId>com.mixin.okhttp3</groupId>
   <artifactId>okhttp</artifactId>
   <version>3.10.0</version>
 </dependency>
@@ -34,7 +34,7 @@ MockWebServer coupling with OkHttp is essential for proper testing of HTTP/2 so 
 Download [the latest JAR][4] or grab via Maven:
 ```xml
 <dependency>
-  <groupId>com.squareup.okhttp3</groupId>
+  <groupId>com.mixin.okhttp3</groupId>
   <artifactId>mockwebserver</artifactId>
   <version>3.10.0</version>
   <scope>test</scope>
