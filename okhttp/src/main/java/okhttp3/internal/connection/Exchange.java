@@ -25,6 +25,7 @@ import okhttp3.Headers;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
+import okhttp3.SessionProvider;
 import okhttp3.internal.Internal;
 import okhttp3.internal.http.ExchangeCodec;
 import okhttp3.internal.http.RealResponseBody;
@@ -70,6 +71,18 @@ public final class Exchange {
     try {
       eventListener.requestHeadersStart(call);
       codec.writeRequestHeaders(request);
+      eventListener.requestHeadersEnd(call, request);
+    } catch (IOException e) {
+      eventListener.requestFailed(call, e);
+      trackFailure(e);
+      throw e;
+    }
+  }
+
+  public void writeRequestHeaders(Request request, SessionProvider sessionProvider) throws IOException {
+    try {
+      eventListener.requestHeadersStart(call);
+      codec.writeRequestHeaders(request, sessionProvider);
       eventListener.requestHeadersEnd(call, request);
     } catch (IOException e) {
       eventListener.requestFailed(call, e);
