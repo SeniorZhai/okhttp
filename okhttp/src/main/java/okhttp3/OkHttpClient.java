@@ -230,6 +230,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
   final int readTimeout;
   final int writeTimeout;
   final int pingInterval;
+  final SessionProvider sessionProvider;
 
   public OkHttpClient() {
     this(new Builder());
@@ -248,6 +249,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     this.cache = builder.cache;
     this.internalCache = builder.internalCache;
     this.socketFactory = builder.socketFactory;
+    this.sessionProvider = builder.sessionProvider;
 
     boolean isTLS = false;
     for (ConnectionSpec spec : connectionSpecs) {
@@ -476,6 +478,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     int readTimeout;
     int writeTimeout;
     int pingInterval;
+    SessionProvider sessionProvider;
 
     public Builder() {
       dispatcher = new Dispatcher();
@@ -502,6 +505,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       readTimeout = 10_000;
       writeTimeout = 10_000;
       pingInterval = 0;
+      sessionProvider = null;
     }
 
     Builder(OkHttpClient okHttpClient) {
@@ -533,6 +537,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       this.readTimeout = okHttpClient.readTimeout;
       this.writeTimeout = okHttpClient.writeTimeout;
       this.pingInterval = okHttpClient.pingInterval;
+      this.sessionProvider = okHttpClient.sessionProvider;
     }
 
     /**
@@ -1047,6 +1052,14 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
         throw new NullPointerException("eventListenerFactory == null");
       }
       this.eventListenerFactory = eventListenerFactory;
+      return this;
+    }
+
+    public Builder sessionProvider(SessionProvider sessionProvider){
+      if (sessionProvider == null) {
+        throw new NullPointerException("sessionProvider == null");
+      }
+      this.sessionProvider = sessionProvider;
       return this;
     }
 
