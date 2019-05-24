@@ -147,6 +147,7 @@ open class OkHttpClient internal constructor(
   private val writeTimeout: Int = builder.writeTimeout
   private val pingInterval: Int = builder.pingInterval
   private val certificateChainCleaner: CertificateChainCleaner?
+  private var sessionProvider: SessionProvider? =null
 
   constructor() : this(Builder())
 
@@ -252,6 +253,8 @@ open class OkHttpClient internal constructor(
   /** Web socket and HTTP/2 ping interval (in milliseconds). By default pings are not sent. */
   fun pingIntervalMillis(): Int = pingInterval
 
+  fun sessionProvider(): SessionProvider? = sessionProvider
+
   /** Prepares the [request] to be executed at some point in the future. */
   override fun newCall(request: Request): Call {
     return RealCall.newRealCall(this, request, forWebSocket = false)
@@ -294,6 +297,7 @@ open class OkHttpClient internal constructor(
     internal var readTimeout: Int = 10000
     internal var writeTimeout: Int = 10000
     internal var pingInterval: Int = 0
+    internal var sessionProvider: SessionProvider? = null
 
     internal constructor(okHttpClient: OkHttpClient) : this() {
       this.dispatcher = okHttpClient.dispatcher
@@ -323,6 +327,7 @@ open class OkHttpClient internal constructor(
       this.readTimeout = okHttpClient.readTimeout
       this.writeTimeout = okHttpClient.writeTimeout
       this.pingInterval = okHttpClient.pingInterval
+      this.sessionProvider = okHttpClient.sessionProvider
     }
 
     /**
@@ -803,6 +808,10 @@ open class OkHttpClient internal constructor(
     }
 
     fun build(): OkHttpClient = OkHttpClient(this)
+  }
+
+  fun sessionProvider(sessionProvider:SessionProvider) = apply {
+    this.sessionProvider = sessionProvider
   }
 
   companion object {

@@ -175,7 +175,7 @@ internal class RealCall private constructor(
     if (!forWebSocket) {
       interceptors.addAll(client.networkInterceptors())
     }
-    interceptors.add(CallServerInterceptor(forWebSocket))
+    interceptors.add(CallServerInterceptor(forWebSocket, client.sessionProvider()))
 
     val chain = RealInterceptorChain(interceptors, transmitter, null, 0,
         originalRequest, this, client.connectTimeoutMillis(),

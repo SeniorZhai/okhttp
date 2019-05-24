@@ -17,13 +17,15 @@ package okhttp3.internal.http
 
 import okhttp3.Interceptor
 import okhttp3.Response
+import okhttp3.SessionProvider
 import okhttp3.internal.EMPTY_RESPONSE
 import okio.buffer
 import java.io.IOException
 import java.net.ProtocolException
 
 /** This is the last interceptor in the chain. It makes a network call to the server. */
-class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
+class CallServerInterceptor(private val forWebSocket: Boolean,
+    private val sessionProvider: SessionProvider? = null) : Interceptor {
 
   @Throws(IOException::class)
   override fun intercept(chain: Interceptor.Chain): Response {

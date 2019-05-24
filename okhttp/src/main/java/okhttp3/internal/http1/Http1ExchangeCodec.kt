@@ -20,6 +20,7 @@ import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import okhttp3.SessionProvider
 import okhttp3.internal.EMPTY_HEADERS
 import okhttp3.internal.checkOffsetAndCount
 import okhttp3.internal.connection.RealConnection
@@ -62,12 +63,12 @@ import java.util.concurrent.TimeUnit.MILLISECONDS
  * [newFixedLengthSource(0)][newFixedLengthSource] and may skip reading and closing that source.
  */
 class Http1ExchangeCodec(
-  /** The client that configures this stream. May be null for HTTPS proxy tunnels. */
-  private val client: OkHttpClient?,
-  /** The connection that carries this stream. */
-  private val realConnection: RealConnection?,
-  private val source: BufferedSource,
-  private val sink: BufferedSink
+    /** The client that configures this stream. May be null for HTTPS proxy tunnels. */
+    private val client: OkHttpClient?,
+    /** The connection that carries this stream. */
+    private val realConnection: RealConnection?,
+    private val source: BufferedSource,
+    private val sink: BufferedSink
 ) : ExchangeCodec {
   private var state = STATE_IDLE
   private var headerLimit = HEADER_LIMIT.toLong()
@@ -116,10 +117,10 @@ class Http1ExchangeCodec(
    * has been written to and closed. This ensures that the `Content-Length` header field receives
    * the proper value.
    */
-  override fun writeRequestHeaders(request: Request) {
+  override fun writeRequestHeaders(request: Request, sessionProvider: SessionProvider?) {
     val requestLine = RequestLine.get(
         request, realConnection!!.route().proxy().type())
-    writeRequest(request.headers, requestLine)
+    writeRequest(request.headers, requestLine, sessionProvider?.getSession(request))
   }
 
   override fun reportedContentLength(response: Response): Long {
@@ -159,7 +160,7 @@ class Http1ExchangeCodec(
   }
 
   /** Returns bytes of a request header for sending on an HTTP transport. */
-  fun writeRequest(headers: Headers, requestLine: String) {
+  fun writeRequest(headers: Headers, requestLine: String, session: String?) {
     check(state == STATE_IDLE) { "state: $state" }
     sink.writeUtf8(requestLine).writeUtf8("\r\n")
     for (i in 0 until headers.size) {
@@ -167,6 +168,9 @@ class Http1ExchangeCodec(
           .writeUtf8(": ")
           .writeUtf8(headers.value(i))
           .writeUtf8("\r\n")
+    }
+    session?.let {
+      sink.writeUtf8(it).writeUtf8("\r\n")
     }
     sink.writeUtf8("\r\n")
     state = STATE_OPEN_REQUEST_BODY
