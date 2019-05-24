@@ -19,6 +19,7 @@ import java.io.IOException
 import okhttp3.Headers
 import okhttp3.Request
 import okhttp3.Response
+import okhttp3.SessionProvider
 import okhttp3.internal.connection.RealConnection
 import okio.Sink
 import okio.Source
@@ -35,7 +36,7 @@ interface ExchangeCodec {
 
   /** This should update the HTTP engine's sentRequestMillis field. */
   @Throws(IOException::class)
-  fun writeRequestHeaders(request: Request)
+  fun writeRequestHeaders(request: Request, provider: SessionProvider?=null)
 
   /** Flush the request to the underlying socket. */
   @Throws(IOException::class)

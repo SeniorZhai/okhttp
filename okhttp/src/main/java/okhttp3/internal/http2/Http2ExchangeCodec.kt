@@ -21,6 +21,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
+import okhttp3.SessionProvider
 import okhttp3.internal.connection.RealConnection
 import okhttp3.internal.headersContentLength
 import okhttp3.internal.http.ExchangeCodec
@@ -71,11 +72,15 @@ class Http2ExchangeCodec(
     return stream!!.getSink()
   }
 
-  override fun writeRequestHeaders(request: Request) {
+  override fun writeRequestHeaders(request: Request, provider: SessionProvider?) {
     if (stream != null) return
 
     val hasRequestBody = request.body != null
-    val requestHeaders = http2HeadersList(request)
+    val requestHeaders = mutableListOf<Header>()
+    requestHeaders.addAll(http2HeadersList(request).toList())
+    provider?.let{
+      requestHeaders.add(it.getSessionHeader(request))
+    }
     stream = connection.newStream(requestHeaders, hasRequestBody)
     // We may have been asked to cancel while creating the new stream and sending the request
     // headers, but there was still no stream to close.
