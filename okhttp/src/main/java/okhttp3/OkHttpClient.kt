@@ -208,6 +208,8 @@ open class OkHttpClient internal constructor(
   /** Web socket and HTTP/2 ping interval (in milliseconds). By default pings are not sent. */
   @get:JvmName("pingIntervalMillis") val pingIntervalMillis: Int = builder.pingInterval
 
+  val sessionProvider: SessionProvider? = builder.sessionProvider
+
   constructor() : this(Builder())
 
   init {
@@ -236,6 +238,8 @@ open class OkHttpClient internal constructor(
       "Null network interceptor: $networkInterceptors"
     }
   }
+
+  fun sessionProvider(): SessionProvider? = sessionProvider
 
   /** Prepares the [request] to be executed at some point in the future. */
   override fun newCall(request: Request): Call {
@@ -462,6 +466,7 @@ open class OkHttpClient internal constructor(
     internal var readTimeout = 10_000
     internal var writeTimeout = 10_000
     internal var pingInterval = 0
+    internal var sessionProvider: SessionProvider? = null
 
     internal constructor(okHttpClient: OkHttpClient) : this() {
       this.dispatcher = okHttpClient.dispatcher
@@ -492,6 +497,7 @@ open class OkHttpClient internal constructor(
       this.readTimeout = okHttpClient.readTimeoutMillis
       this.writeTimeout = okHttpClient.writeTimeoutMillis
       this.pingInterval = okHttpClient.pingIntervalMillis
+      this.sessionProvider = okHttpClient.sessionProvider
     }
 
     /**
@@ -950,6 +956,10 @@ open class OkHttpClient internal constructor(
     @IgnoreJRERequirement
     fun pingInterval(duration: Duration) = apply {
       pingInterval = checkDuration("timeout", duration.toMillis(), TimeUnit.MILLISECONDS)
+    }
+
+    fun sessionProvider(sessionProvider:SessionProvider) = apply {
+      this.sessionProvider = sessionProvider
     }
 
     fun build(): OkHttpClient = OkHttpClient(this)

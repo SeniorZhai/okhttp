@@ -80,7 +80,8 @@ class ExchangeFinder(
           writeTimeout = writeTimeout,
           pingIntervalMillis = pingIntervalMillis,
           connectionRetryEnabled = connectionRetryEnabled,
-          doExtensiveHealthChecks = doExtensiveHealthChecks
+          doExtensiveHealthChecks = doExtensiveHealthChecks,
+          client = client
       )
       return resultConnection.newCodec(client, chain)
     } catch (e: RouteException) {
@@ -103,7 +104,8 @@ class ExchangeFinder(
     writeTimeout: Int,
     pingIntervalMillis: Int,
     connectionRetryEnabled: Boolean,
-    doExtensiveHealthChecks: Boolean
+    doExtensiveHealthChecks: Boolean,
+    client: OkHttpClient
   ): RealConnection {
     while (true) {
       val candidate = findConnection(
@@ -111,7 +113,8 @@ class ExchangeFinder(
           readTimeout = readTimeout,
           writeTimeout = writeTimeout,
           pingIntervalMillis = pingIntervalMillis,
-          connectionRetryEnabled = connectionRetryEnabled
+          connectionRetryEnabled = connectionRetryEnabled,
+          client = client
       )
 
       // If this is a brand new connection, we can skip the extensive health checks.
@@ -142,7 +145,8 @@ class ExchangeFinder(
     readTimeout: Int,
     writeTimeout: Int,
     pingIntervalMillis: Int,
-    connectionRetryEnabled: Boolean
+    connectionRetryEnabled: Boolean,
+    client: OkHttpClient
   ): RealConnection {
     var foundPooledConnection = false
     var result: RealConnection? = null
@@ -221,7 +225,7 @@ class ExchangeFinder(
 
         // Create a connection and assign it to this allocation immediately. This makes it possible
         // for an asynchronous cancel() to interrupt the handshake we're about to do.
-        result = RealConnection(connectionPool, selectedRoute!!)
+        result = RealConnection(connectionPool, selectedRoute!!, client.sessionProvider)
         connectingConnection = result
       }
     }

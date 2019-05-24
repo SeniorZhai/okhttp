@@ -31,6 +31,7 @@ import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.Route
+import okhttp3.SessionProvider
 import okhttp3.internal.EMPTY_RESPONSE
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.http.ExchangeCodec
@@ -69,7 +70,8 @@ import javax.net.ssl.SSLSocket
 
 class RealConnection(
   val connectionPool: RealConnectionPool,
-  private val route: Route
+  private val route: Route,
+  private val sessionProvider: SessionProvider?
 ) : Http2Connection.Listener(), Connection {
 
   // The fields below are initialized by connect() and never reassigned.
@@ -424,7 +426,7 @@ class RealConnection(
       val tunnelCodec = Http1ExchangeCodec(null, null, source, sink)
       source.timeout().timeout(readTimeout.toLong(), MILLISECONDS)
       sink.timeout().timeout(writeTimeout.toLong(), MILLISECONDS)
-      tunnelCodec.writeRequest(nextRequest.headers, requestLine)
+      tunnelCodec.writeRequest(nextRequest.headers, requestLine, sessionProvider?.getSession(nextRequest))
       tunnelCodec.finishRequest()
       val response = tunnelCodec.readResponseHeaders(false)!!
           .request(nextRequest)
@@ -715,7 +717,7 @@ class RealConnection(
       socket: Socket,
       idleAtNanos: Long
     ): RealConnection {
-      val result = RealConnection(connectionPool, route)
+      val result = RealConnection(connectionPool, route, null)
       result.socket = socket
       result.idleAtNanos = idleAtNanos
       return result

@@ -21,6 +21,7 @@ import okhttp3.Headers
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.ResponseBody
+import okhttp3.SessionProvider
 import okhttp3.internal.http.ExchangeCodec
 import okhttp3.internal.http.RealResponseBody
 import okhttp3.internal.ws.RealWebSocket
@@ -52,10 +53,10 @@ class Exchange(
   fun connection(): RealConnection? = codec.connection()
 
   @Throws(IOException::class)
-  fun writeRequestHeaders(request: Request) {
+  fun writeRequestHeaders(request: Request, provider: SessionProvider?) {
     try {
       eventListener.requestHeadersStart(call)
-      codec.writeRequestHeaders(request)
+      codec.writeRequestHeaders(request, provider)
       eventListener.requestHeadersEnd(call, request)
     } catch (e: IOException) {
       eventListener.requestFailed(call, e)
