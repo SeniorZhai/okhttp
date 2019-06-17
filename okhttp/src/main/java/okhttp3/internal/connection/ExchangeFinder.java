@@ -63,7 +63,6 @@ final class ExchangeFinder {
   private final RouteSelector routeSelector;
   private RealConnection connectingConnection;
   private boolean hasStreamFailure;
-  private Route nextRouteToTry;
 
   ExchangeFinder(Transmitter transmitter, RealConnectionPool connectionPool,
       Address address, Call call, EventListener eventListener) {
@@ -141,6 +140,10 @@ final class ExchangeFinder {
       if (transmitter.isCanceled()) throw new IOException("Canceled");
       hasStreamFailure = false; // This is a fresh attempt.
 
+      Route previousRoute = retryCurrentRoute()
+          ? transmitter.connection.route()
+          : null;
+
       // Attempt to use an already-allocated connection. We need to be careful here because our
       // already-allocated connection may have been restricted from creating new exchanges.
       releasedConnection = transmitter.connection;
@@ -159,11 +162,8 @@ final class ExchangeFinder {
         if (connectionPool.transmitterAcquirePooledConnection(address, transmitter, null, false)) {
           foundPooledConnection = true;
           result = transmitter.connection;
-        } else if (nextRouteToTry != null) {
-          selectedRoute = nextRouteToTry;
-          nextRouteToTry = null;
-        } else if (retryCurrentRoute()) {
-          selectedRoute = transmitter.connection.route();
+        } else {
+          selectedRoute = previousRoute;
         }
       }
     }
@@ -268,15 +268,8 @@ final class ExchangeFinder {
   /** Returns true if a current route is still good or if there are routes we haven't tried yet. */
   boolean hasRouteToTry() {
     synchronized (connectionPool) {
-      if (nextRouteToTry != null) {
-        return true;
-      }
-      if (retryCurrentRoute()) {
-        // Lock in the route because retryCurrentRoute() is racy and we don't want to call it twice.
-        nextRouteToTry = transmitter.connection.route();
-        return true;
-      }
-      return (routeSelection != null && routeSelection.hasNext())
+      return retryCurrentRoute()
+          || (routeSelection != null && routeSelection.hasNext())
           || routeSelector.hasNext();
     }
   }
